@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ocorrências | Sesc Mogi das Cruzes</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <section id="login-screen" class="login-screen">
+    <div class="login-copy">
+      <p class="eyebrow">Sesc Mogi das Cruzes</p>
+      <h1>Cuidado que se registra.<br><em>Gestão que acompanha.</em></h1>
+      <p>Central de ocorrências e incidentes médicos da unidade.</p>
+    </div>
+    <form id="login-form" class="login-card">
+      <span class="mark">S</span>
+      <h2>Acesso corporativo</h2>
+      <p>Selecione um usuário de teste para entrar no ambiente.</p>
+      <label>Usuário / perfil<select id="login-user" required></select></label>
+      <label>Senha numérica<input id="login-password" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" minlength="4" autocomplete="current-password" placeholder="4 dígitos" required></label>
+      <button class="button" type="submit">Entrar no sistema <span>→</span></button>
+    </form>
+  </section>
+  <main id="app" class="app hidden">
+    <header class="topbar">
+      <a class="brand" href="#"><span class="mark small">S</span><span><b>Sesc</b><small>Mogi das Cruzes</small></span></a>
+      <div class="session"><span id="current-user"></span><button id="change-password" class="text-button" type="button">Alterar senha</button><button id="logout" class="text-button" type="button">Sair</button></div>
+    </header>
+    <div class="layout">
+      <aside class="sidebar">
+        <p class="eyebrow">Operação</p>
+        <nav>
+          <button class="nav-button active" data-view="occurrence-view"><span class="nav-icon">+</span> Nova ocorrência</button>
+          <button class="nav-button" data-view="medical-view"><span class="nav-icon">✚</span> Incidente médico</button>
+          <button class="nav-button" data-view="approval-view"><span class="nav-icon">✓</span> Aprovações <b id="pending-count">0</b></button>
+          <button id="users-nav" class="nav-button nti-only" data-view="users-view"><span class="nav-icon">♙</span> Gestão de usuários</button>
+        </nav>
+        <div class="sidebar-note"><b>Ambiente de teste</b><p>Os dados ficam salvos no SQLite local.</p></div>
+      </aside>
+      <section class="content">
+        <div class="page-heading"><div><p class="eyebrow">Olá, <span id="greeting"></span></p><h2 id="page-title">Nova ocorrência</h2></div><span class="date" id="today"></span></div>
+        <div id="notice" class="notice hidden"></div>
+        <section id="occurrence-view" class="view">
+          <form id="occurrence-form" class="form-grid">
+            <fieldset><legend>Dados da ocorrência</legend><div class="grid-3"><label>Data *<input name="date" type="date" required></label><label>Horário *<input name="time" type="time" required></label><label>Local *<select name="locationId" id="location" required></select></label></div><div class="grid-2"><label>Tipo de ocorrência *<select name="occurrenceTypeId" id="occurrence-type" required></select></label><label>Confidencialidade<select name="confidentiality"><option value="interno">Interno</option><option value="confidencial">Confidencial</option><option value="restrito">Restrito</option><option value="publico">Público</option></select></label></div></fieldset>
+            <fieldset><legend>Dados do frequentador</legend><div class="grid-3"><label>Nome completo *<input name="frequentadorName" required></label><label>CPF / RG<input name="document"></label><label>Telefone<input name="phone" type="tel"></label></div><div class="grid-3"><label>Tipo de credencial<select name="credentialType" id="credential-type"><option value="">Selecione</option><option value="plena">Plena</option><option value="atividade">Atividade</option><option value="mis">MIS</option><option value="visitante">Visitante</option><option value="nao_possui">Não possui</option></select></label><label id="credential-number-field" class="credential-number-field is-hidden">Número da credencial<input name="credentialNumber" id="credential-number" inputmode="numeric" autocomplete="off" disabled></label><label>Data de nascimento<input name="birthDate" type="date"></label></div></fieldset>
+            <fieldset><legend>Acompanhante / responsável <small>(opcional)</small></legend><div class="grid-2"><label>Nome<input name="companionName"></label><label>Vínculo<input name="relationship" placeholder="Ex.: mãe, responsável legal"></label></div></fieldset>
+            <fieldset><legend>Relato e encaminhamento</legend><label>Detalhamento da ocorrência *<textarea name="description" rows="5" required placeholder="Descreva o que aconteceu, quando e quem esteve envolvido."></textarea></label><label>Orientações SESC<textarea name="guidance" rows="3" placeholder="Registre orientações dadas ao frequentador e à equipe."></textarea></label><label class="check"><input name="management" type="checkbox"> Encaminhar para análise da Gerência</label></fieldset>
+            <div class="form-actions"><button class="button secondary" type="reset">Limpar</button><button class="button" type="submit">Salvar ocorrência <span>→</span></button></div>
+          </form>
+        </section>
+        <section id="medical-view" class="view hidden"><form id="medical-form" class="form-grid"><fieldset><legend>Identificação do incidente</legend><div class="grid-3"><label>Data *<input name="date" type="date" required></label><label>Horário *<input name="time" type="time" required></label><label>Local *<select name="locationId" class="location-select" required></select></label></div><div class="grid-2"><label>Tipo *<select name="occurrenceTypeId" class="type-select" required></select></label><label>Frequentador *<input name="frequentadorName" required></label></div></fieldset><fieldset><legend>Atendimento médico</legend><div class="grid-2"><label>Profissional responsável<input name="professional"></label><label>Registro profissional<input name="registration"></label></div><label>Queixa principal<input name="complaint"></label><label>H.D.A. <textarea name="hda" rows="4" placeholder="História da doença atual"></textarea></label><label>Exame físico<textarea name="physicalExam" rows="4"></textarea></label><label>Conduta médica<textarea name="conduct" rows="4"></textarea></label><div class="grid-2"><label>Desfecho<select name="outcome"><option value="">Selecione</option><option>Alta no local</option><option>Encaminhado ao pronto atendimento</option><option>Remoção pelo SAMU</option><option>Recusa de atendimento</option></select></label><label>Local de encaminhamento<input name="referralLocation"></label></div></fieldset><div class="form-actions"><button class="button" type="submit">Salvar incidente <span>→</span></button></div></form></section>
+        <section id="approval-view" class="view hidden"><div class="approval-toolbar"><div><p class="eyebrow">Governança</p><h3>Fila de aprovação</h3></div><button class="button secondary" id="refresh" type="button">Atualizar</button></div><div class="table-wrap"><table><thead><tr><th>Protocolo</th><th>Ocorrência</th><th>Local</th><th>Registrado por</th><th>Status</th><th>Ação</th></tr></thead><tbody id="occurrence-list"></tbody></table><p id="empty-list" class="empty hidden">Nenhuma ocorrência registrada ainda.</p></div></section>
+        <section id="users-view" class="view hidden nti-only"><div class="approval-toolbar"><div><p class="eyebrow">Administração NTI</p><h3>Gestão de usuários</h3></div><span class="date">Acesso restrito ao NTI</span></div><form id="user-form" class="user-form"><input type="hidden" name="id"><label>Nome completo<input name="name" required></label><label>E-mail corporativo<input name="email" type="email" required></label><label>Perfil<select name="profile" required><option value="">Selecione</option><option>Membro</option><option>Supervisor</option><option>Coordenador</option><option>Gerente</option><option>NTI</option></select></label><label>Senha (4 dígitos)<input id="user-password" name="password" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" minlength="4" autocomplete="new-password" placeholder="Digite 4 números" required></label><div class="form-actions"><button id="cancel-user-edit" class="button secondary hidden" type="button">Cancelar</button><button class="button" type="submit"><b id="user-submit-label">Cadastrar usuário</b> <span>→</span></button></div></form><div class="table-wrap users-table"><table><thead><tr><th>Nome</th><th>E-mail</th><th>Perfil</th><th>Situação</th><th>Ações</th></tr></thead><tbody id="users-list"></tbody></table><p id="empty-users" class="empty hidden">Nenhum usuário cadastrado.</p></div></section>
+      </section>
+    </div>
+  </main>
+  <dialog id="password-dialog" class="password-dialog"><form id="password-form" method="dialog"><button id="close-password" class="dialog-close" type="button" aria-label="Fechar">×</button><p class="eyebrow">Segurança</p><h2>Alterar senha</h2><p>Use uma senha numérica com exatamente 4 dígitos.</p><label>Senha atual<input name="currentPassword" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required></label><label>Nova senha<input name="newPassword" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required></label><div class="form-actions"><button class="button" type="submit">Salvar senha</button></div></form></dialog>
+  <script src="/app.js"></script>
+</body>
+</html>
