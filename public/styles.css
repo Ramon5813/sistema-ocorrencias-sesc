@@ -110,6 +110,8 @@ td small { color: var(--muted); }
 .user-status { display: inline-block; border-radius: 20px; padding: 5px 9px; font-size: .7rem; font-weight: 700; }
 .user-status.active { color: var(--green); background: var(--green-soft); }
 .user-status.inactive { color: var(--muted); background: #edf0ed; }
+.location-form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px; align-items: end; margin-bottom: 22px; padding: 22px; border: 1px solid var(--line); background: var(--surface); box-shadow: var(--shadow); }
+.location-form .form-actions { padding: 0; }
 
 @media (max-width: 760px) {
   .login-screen { grid-template-columns: 1fr; gap: 42px; padding: 42px 22px; }
@@ -126,6 +128,7 @@ td small { color: var(--muted); }
   .page-heading { display: block; }.date { display: block; margin-top: 9px; }
   .grid-2, .grid-3 { grid-template-columns: 1fr; }
   .user-form { grid-template-columns: 1fr; }
+  .location-form { grid-template-columns: 1fr; }
   fieldset { padding: 21px 18px; }
   .form-actions { justify-content: stretch; }.form-actions .button { flex: 1; }
   .session { gap: 10px; font-size: .72rem; }.session span { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
