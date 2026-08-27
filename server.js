@@ -7,6 +7,7 @@ const db = require('./database');
 const occurrenceRoutes = require('./routes/occurrences');
 const userRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
+const locationRoutes = require('./routes/locations');
 
 const app = express();
 const port = Number(process.env.PORT) || 3000;
@@ -28,6 +29,7 @@ app.get('/api/health', (_request, response) => {
 app.use('/api/occurrences', occurrenceRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/locations', locationRoutes);
 
 app.use((error, _request, response, _next) => {
   console.error(error);
