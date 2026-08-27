@@ -130,11 +130,14 @@ function seedDatabase() {
     ['Equipe NTI', 'nti@sesc.local', 'NTI', '5813']
   ];
   const locations = [
-    ['Recepcao', 'Entrada principal da unidade'],
-    ['Quadra Poliesportiva', 'Espaco esportivo'],
-    ['Piscina', 'Area aquatico-esportiva'],
-    ['Restaurante', 'Area de alimentacao'],
-    ['Estacionamento', 'Estacionamento da unidade']
+    ['Recepção', 'Entrada principal da unidade'],
+    ['Comedoria', 'Área de alimentação'],
+    ['Teatro', 'Espaço cultural e apresentações'],
+    ['Ginásio', 'Espaço esportivo'],
+    ['Biblioteca', 'Espaço de leitura'],
+    ['Sala de Oficinas', 'Espaço para atividades e oficinas'],
+    ['Estacionamento', 'Estacionamento da unidade'],
+    ['Área Externa', 'Áreas externas da unidade']
   ];
   const occurrenceTypes = [
     ['Furto', 'Subtracao de bem sem violencia'],
@@ -154,6 +157,13 @@ function seedDatabase() {
   const locationStatement = db.prepare('INSERT OR IGNORE INTO locations (name, description) VALUES (?, ?)');
   locations.forEach((location) => locationStatement.run(location));
   locationStatement.finalize();
+  db.get('SELECT COUNT(*) AS count FROM locations', (error, row) => {
+    if (error || row.count > 0) return;
+    const defaultLocations = [['Recepção'], ['Comedoria'], ['Teatro'], ['Ginásio'], ['Biblioteca'], ['Sala de Oficinas'], ['Estacionamento'], ['Área Externa']];
+    const statement = db.prepare('INSERT OR IGNORE INTO locations (name) VALUES (?)');
+    defaultLocations.forEach((location) => statement.run(location));
+    statement.finalize();
+  });
 
   const typeStatement = db.prepare('INSERT OR IGNORE INTO occurrence_types (name, description) VALUES (?, ?)');
   occurrenceTypes.forEach((type) => typeStatement.run(type));
