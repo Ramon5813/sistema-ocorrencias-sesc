@@ -1,4 +1,4 @@
-const state = { user: null, catalogs: null };
+const state = { user: null, catalogs: null, occurrences: [] };
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
 
@@ -33,13 +33,35 @@ function updateCredentialNumber() {
   number.required = shouldShow;
   if (!shouldShow) number.value = '';
 }
+function escapeHtml(value) { return String(value ?? '').replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character])); }
+function renderDashboard(occurrences = state.occurrences) {
+  const filters = formValues($('#dashboard-filters'));
+  const filtered = occurrences.filter((item) => {
+    const date = item.occurred_at.slice(0, 10);
+    return (!filters.startDate || date >= filters.startDate) && (!filters.endDate || date <= filters.endDate)
+      && (!filters.locationId || String(item.location_id) === filters.locationId) && (!filters.status || item.status === filters.status);
+  });
+  $('#metric-total').textContent = filtered.length;
+  $('#metric-pending').textContent = filtered.filter((item) => ['rascunho', 'em_analise'].includes(item.status)).length;
+  $('#metric-approved').textContent = filtered.filter((item) => item.status === 'aprovada').length;
+  $('#metric-rejected').textContent = filtered.filter((item) => item.status === 'reprovada').length;
+  $('#dashboard-list').innerHTML = filtered.map((item) => `<tr><td><b>${escapeHtml(item.protocol)}</b></td><td>${new Date(item.occurred_at).toLocaleString('pt-BR')}</td><td>${escapeHtml(item.occurrence_type)}<br><small>${escapeHtml(item.frequentador_name || 'Frequentador não informado')}</small></td><td>${escapeHtml(item.location)}</td><td>${escapeHtml(item.reported_by_name)}</td><td><span class="badge ${escapeHtml(item.status)}">${escapeHtml(item.status.replace('_', ' '))}</span></td><td><button class="table-action" data-details-id="${item.id}" type="button">Detalhes</button></td></tr>`).join('');
+  $('#dashboard-empty').classList.toggle('hidden', filtered.length > 0);
+}
+async function loadDashboard() { state.occurrences = await api('/api/occurrences'); renderDashboard(); }
+async function showOccurrenceDetails(id) { const item = await api(`/api/occurrences/${id}`); $('#details-protocol').textContent = item.protocol; $('#occurrence-details').innerHTML = `<div><span>Status</span><b>${escapeHtml(item.status.replace('_', ' '))}</b></div><div><span>Data e horário</span><b>${new Date(item.occurred_at).toLocaleString('pt-BR')}</b></div><div><span>Tipo</span><b>${escapeHtml(item.occurrence_type)}</b></div><div><span>Local</span><b>${escapeHtml(item.location)}</b></div><div><span>Frequentador</span><b>${escapeHtml(item.frequentador_name || 'Não informado')}</b></div><div><span>Registrado por</span><b>${escapeHtml(item.reported_by_name)}</b></div><div class="detail-wide"><span>Relato</span><p>${escapeHtml(item.description)}</p></div>`; $('#occurrence-details-dialog').showModal(); }
 async function loadApprovals() { const occurrences = await api('/api/occurrences'); const pending = occurrences.filter((item) => ['rascunho', 'em_analise'].includes(item.status)); const canDecide = ['Supervisor', 'Coordenador', 'Gerente', 'NTI'].includes(state.user?.profile); $('#pending-count').textContent = pending.length; $('#occurrence-list').innerHTML = occurrences.map((item) => `<tr><td><b>${item.protocol}</b><br><small>${new Date(item.occurred_at).toLocaleString('pt-BR')}</small></td><td>${item.occurrence_type}<br><small>${item.frequentador_name || 'Frequentador não informado'}</small></td><td>${item.location}</td><td>${item.reported_by_name}</td><td><span class="badge ${item.status}">${item.status.replace('_', ' ')}</span></td><td>${pending.includes(item) && canDecide ? `<div class="actions"><button data-action="approve" data-id="${item.id}">Aprovar</button><button data-action="reject" data-id="${item.id}">Reprovar</button><button data-action="request_correction" data-id="${item.id}">Correção</button></div>` : '<small>Consulta</small>'}</td></tr>`).join(''); $('#empty-list').classList.toggle('hidden', occurrences.length > 0); }
-function activateView(id) { $$('.view').forEach((view) => view.classList.toggle('hidden', view.id !== id)); $$('.nav-button').forEach((button) => button.classList.toggle('active', button.dataset.view === id)); $('#page-title').textContent = id === 'medical-view' ? 'Incidente médico' : id === 'approval-view' ? 'Fila de aprovação' : id === 'users-view' ? 'Gestão de usuários' : id === 'locations-view' ? 'Gestão de locais' : 'Nova ocorrência'; if (id === 'approval-view') loadApprovals().catch((error) => showNotice(error.message, true)); if (id === 'users-view') loadUsers().catch((error) => showNotice(error.message, true)); if (id === 'locations-view') loadLocations().catch((error) => showNotice(error.message, true)); }
-async function enter(user) { state.user = user; $('#login-screen').classList.add('hidden'); $('#app').classList.remove('hidden'); $('#current-user').textContent = `${user.name} · ${user.profile}`; $('#greeting').textContent = user.name.split(' ')[0]; $$('.nti-only').forEach((element) => element.classList.toggle('hidden', user.profile !== 'NTI')); state.catalogs = await api('/api/occurrences/catalogs'); await loadLocations(); $('#today').textContent = new Date().toLocaleDateString('pt-BR', { dateStyle: 'long' }); loadApprovals(); if (user.profile === 'NTI') loadUsers(); }
+function activateView(id) { $$('.view').forEach((view) => { const active = view.id === id; view.classList.toggle('hidden', !active); view.classList.toggle('active', active); }); $$('.nav-button').forEach((button) => button.classList.toggle('active', button.dataset.view === id)); $('#page-title').textContent = id === 'medical-view' ? 'Incidente médico' : id === 'dashboard-view' ? 'Dashboard' : id === 'approval-view' ? 'Fila de aprovação' : id === 'users-view' ? 'Gestão de usuários' : id === 'locations-view' ? 'Gestão de locais' : 'Nova ocorrência'; if (id === 'dashboard-view') loadDashboard().catch((error) => showNotice(error.message, true)); if (id === 'approval-view') loadApprovals().catch((error) => showNotice(error.message, true)); if (id === 'users-view') loadUsers().catch((error) => showNotice(error.message, true)); if (id === 'locations-view') loadLocations().catch((error) => showNotice(error.message, true)); }
+async function enter(user) { state.user = user; $('#login-screen').classList.add('hidden'); $('#app').classList.remove('hidden'); $('#current-user').textContent = `${user.name} · ${user.profile}`; $('#greeting').textContent = user.name.split(' ')[0]; $$('.nti-only').forEach((element) => element.classList.toggle('hidden', user.profile !== 'NTI')); state.catalogs = await api('/api/occurrences/catalogs'); await loadLocations(); $('#dashboard-location').replaceChildren(new Option('Todos os locais', ''), ...state.locations.map((item) => new Option(item.name, item.id))); $('#today').textContent = new Date().toLocaleDateString('pt-BR', { dateStyle: 'long' }); activateView('occurrence-view'); loadApprovals(); if (user.profile === 'NTI') loadUsers(); }
 
 $('#login-form').addEventListener('submit', async (event) => { event.preventDefault(); try { const user = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({ userId: Number($('#login-user').value), password: $('#login-password').value }) }); await enter(user); $('#login-password').value = ''; } catch (error) { showNotice(error.message, true); } });
 $('#logout').addEventListener('click', () => { state.user = null; $('#app').classList.add('hidden'); $('#login-screen').classList.remove('hidden'); });
 $$('.nav-button').forEach((button) => button.addEventListener('click', () => activateView(button.dataset.view)));
+$('#dashboard-filters').addEventListener('input', () => renderDashboard());
+$('#dashboard-filters').addEventListener('reset', () => setTimeout(() => renderDashboard()));
+$('#refresh-dashboard').addEventListener('click', () => loadDashboard().catch((error) => showNotice(error.message, true)));
+$('#dashboard-list').addEventListener('click', (event) => { const button = event.target.closest('[data-details-id]'); if (button) showOccurrenceDetails(button.dataset.detailsId).catch((error) => showNotice(error.message, true)); });
+$('#close-occurrence-details').addEventListener('click', () => $('#occurrence-details-dialog').close());
 $('#refresh').addEventListener('click', () => loadApprovals().catch((error) => showNotice(error.message, true)));
 $('#credential-type').addEventListener('change', updateCredentialNumber);
 $('#occurrence-form').addEventListener('reset', () => setTimeout(updateCredentialNumber));
